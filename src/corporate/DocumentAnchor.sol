@@ -78,6 +78,19 @@ contract DocumentAnchor is AccessControl, Initializable {
         return _documents[documentId - 1];
     }
 
+    /// @notice Most recent document of `kind`. Reverts with UnknownDocument if none of that kind has been anchored.
+    function latestDocumentOfKind(bytes32 kind) external view returns (Document memory) {
+        uint256 documentId = latestDocumentIdOfKind[kind];
+        if (documentId == 0) revert UnknownDocument();
+        return _documents[documentId - 1];
+    }
+
+    /// @notice True when `hash` has been anchored, which is all a holder needs to check that their copy of a
+    ///         document is one the company published.
+    function isAnchored(bytes32 hash) external view returns (bool) {
+        return documentIdByHash[hash] != 0;
+    }
+
     function documentCount() external view returns (uint256) {
         return _documents.length;
     }

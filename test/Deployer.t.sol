@@ -148,6 +148,11 @@ contract DeployerTest is TestBase {
         vm.prank(issuerAdmin);
         uint256 second = disclosures.anchor("BOARD_RESOLUTION", hash2, "ipfs://doc2");
         assertEq(disclosures.latestDocumentIdOfKind("BOARD_RESOLUTION"), second);
+        assertEq(disclosures.latestDocumentOfKind("BOARD_RESOLUTION").hash, hash2);
+        assertTrue(disclosures.isAnchored(hash));
+        assertFalse(disclosures.isAnchored(sha256("never anchored")));
+        vm.expectRevert(DocumentAnchor.UnknownDocument.selector);
+        disclosures.latestDocumentOfKind("COMPANY_UPDATE");
 
         vm.prank(issuerAdmin);
         vm.expectRevert(abi.encodeWithSelector(DocumentAnchor.AlreadyAnchored.selector, 1));

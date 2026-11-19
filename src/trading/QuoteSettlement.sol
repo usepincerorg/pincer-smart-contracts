@@ -63,6 +63,7 @@ contract QuoteSettlement is AccessControl, Initializable, ReentrancyGuard, EIP71
     error Overfill();
     error InvalidSignature();
     error InvalidParams();
+    error SelfFill();
 
     bytes32 public companyId;
     IPincerDeployer public factory;
@@ -138,6 +139,9 @@ contract QuoteSettlement is AccessControl, Initializable, ReentrancyGuard, EIP71
         if (q.side > MAKER_BUYS || quantity == 0 || q.price == 0) revert InvalidParams();
         if (cancelled[q.maker][q.nonce] || q.nonce < minNonce[q.maker]) revert QuoteCancelledError();
         if (q.taker != address(0) && q.taker != msg.sender) revert WrongTaker();
+        // A maker filling their own quote moves no shares between parties and only pays fees, but it still emits
+        // QuoteFilled, which would show up as volume that never happened.
+        if (q.maker == msg.sender) revert SelfFill();
 
         bytes32 quoteHash = hashQuote(q);
         uint256 total = filled[quoteHash] + quantity;

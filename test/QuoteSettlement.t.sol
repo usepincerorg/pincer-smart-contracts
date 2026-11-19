@@ -127,6 +127,14 @@ contract QuoteSettlementTest is TestBase {
         rfq.fill(q, sig, 1);
     }
 
+    function test_MakerCannotFillOwnQuote() public {
+        (QuoteSettlement.Quote memory q, bytes memory sig) = _quote(0, 10, 30e6, 1);
+        vm.prank(maker);
+        vm.expectRevert(QuoteSettlement.SelfFill.selector);
+        rfq.fill(q, sig, _shares(1));
+        assertEq(rfq.remaining(q), _shares(10));
+    }
+
     function test_RulesRunOnEveryFill() public {
         (QuoteSettlement.Quote memory q, bytes memory sig) = _quote(0, 10, 30e6, 1);
         _fund(carol, _usdg(1_000), address(rfq)); // carol holds USDG but was never verified

@@ -17,6 +17,7 @@ contract TransferPolicy is ITransferPolicy, AccessControl, Initializable {
     uint256 public constant MAX_MODULES = 10;
 
     error OnlyToken();
+    error InvalidAddress();
     error InvalidModule();
     error ModuleExists();
     error ModuleMissing();
@@ -35,7 +36,7 @@ contract TransferPolicy is ITransferPolicy, AccessControl, Initializable {
         external
         initializer
     {
-        if (token_ == address(0) || admin == address(0)) revert InvalidModule();
+        if (token_ == address(0) || admin == address(0)) revert InvalidAddress();
         if (modules_.length != configs.length) revert LengthMismatch();
         _token = token_;
         _grantRole(DEFAULT_ADMIN_ROLE, admin);

@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.26;
 
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
+
 import {TestBase} from "./TestBase.t.sol";
 import {PincerDeployer} from "../src/platform/PincerDeployer.sol";
 import {PincerEquityToken} from "../src/platform/PincerEquityToken.sol";
@@ -32,6 +34,15 @@ contract PolicyRulesTest is TestBase {
         returns (bytes32 code)
     {
         (, code) = token.canTransfer(from, to, amount);
+    }
+
+    function test_PolicyRejectsZeroTokenOrAdmin() public {
+        address impl = address(new TransferPolicy());
+        TransferPolicy policy = TransferPolicy(Clones.clone(impl));
+        vm.expectRevert(TransferPolicy.InvalidAddress.selector);
+        policy.initialize(address(0), alice, new address[](0), new bytes[](0));
+        vm.expectRevert(TransferPolicy.InvalidAddress.selector);
+        policy.initialize(alice, address(0), new address[](0), new bytes[](0));
     }
 
     function test_RegionAllowList() public {

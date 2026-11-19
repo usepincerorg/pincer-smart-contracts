@@ -10,6 +10,7 @@ import {DocumentAnchor} from "../src/corporate/DocumentAnchor.sol";
 import {ValuationFeed} from "../src/corporate/ValuationFeed.sol";
 import {PoolGuard} from "../src/trading/PoolGuard.sol";
 import {TransferPolicy} from "../src/policy/TransferPolicy.sol";
+import {VerifierList} from "../src/registry/VerifierList.sol";
 import {CheckCodes} from "../src/common/CheckCodes.sol";
 import {ClaimTopics} from "../src/common/ClaimTopics.sol";
 
@@ -111,6 +112,24 @@ contract DeployerTest is TestBase {
 
         vm.expectRevert(CompanyTimelock.OnlySelf.selector);
         timelock.addSigner(alice);
+    }
+
+    // VerifierList topic management
+
+    function test_VerifierListRejectsEmptyTopics() public {
+        VerifierList list = VerifierList(c.trustedVerifiers);
+        vm.prank(address(timelock));
+        vm.expectRevert(VerifierList.NoTopics.selector);
+        list.addVerifier(verifier, new bytes32[](0));
+        // The failed call must leave the existing trust untouched.
+        assertTrue(list.isTrusted(verifier, ClaimTopics.IDENTITY_VERIFIED));
+
+        bytes32[] memory one = new bytes32[](1);
+        one[0] = ClaimTopics.SCREENED;
+        vm.prank(address(timelock));
+        list.addVerifier(verifier, one);
+        assertTrue(list.isTrusted(verifier, ClaimTopics.SCREENED));
+        assertFalse(list.isTrusted(verifier, ClaimTopics.IDENTITY_VERIFIED));
     }
 
     // DocumentAnchor hashes and ValuationFeed publications

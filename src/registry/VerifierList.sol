@@ -15,6 +15,7 @@ contract VerifierList is IVerifierList, AccessControl, Initializable {
 
     error InvalidVerifier();
     error TooManyTopics();
+    error NoTopics();
     error UnknownVerifier();
     error LengthMismatch();
 
@@ -33,6 +34,8 @@ contract VerifierList is IVerifierList, AccessControl, Initializable {
         }
     }
 
+    /// @notice Adds `verifier`, or replaces the topics of one that already exists. To drop a verifier entirely use
+    ///         `removeVerifier`; an empty topic list is rejected so the two cannot be confused.
     function addVerifier(address verifier, bytes32[] calldata topics) external onlyRole(DEFAULT_ADMIN_ROLE) {
         _remove(verifier);
         _add(verifier, topics);
@@ -54,6 +57,7 @@ contract VerifierList is IVerifierList, AccessControl, Initializable {
 
     function _add(address verifier, bytes32[] calldata topics) private {
         if (verifier == address(0)) revert InvalidVerifier();
+        if (topics.length == 0) revert NoTopics();
         if (topics.length > MAX_TOPICS) revert TooManyTopics();
         for (uint256 i; i < topics.length; ++i) {
             if (!_trusted[verifier][topics[i]]) {

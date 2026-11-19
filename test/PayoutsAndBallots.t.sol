@@ -88,6 +88,21 @@ contract PayoutsAndBallotsTest is TestBase {
         assertTrue(distributions.hasClaimed(second, alice));
     }
 
+    function test_ClaimableMany() public {
+        uint256 first = _distribute(_usdg(9_000), 0);
+        uint256 second = _distribute(_usdg(3_000), 0);
+        vm.prank(alice);
+        distributions.claim(first);
+
+        uint256[] memory ids = new uint256[](2);
+        ids[0] = first;
+        ids[1] = second;
+        uint256[] memory amounts = distributions.claimableMany(ids, alice);
+        assertEq(amounts.length, 2);
+        assertEq(amounts[0], 0);
+        assertEq(amounts[1], _usdg(2_000));
+    }
+
     function test_UnknownDistribution() public {
         vm.expectRevert(PayoutVault.UnknownDistribution.selector);
         distributions.claimable(0, alice);

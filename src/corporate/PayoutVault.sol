@@ -130,6 +130,19 @@ contract PayoutVault is AccessControl, Initializable, ReentrancyGuard {
         return (balance * d.amount) / d.eligibleSupply;
     }
 
+    /// @notice `claimable` for several distributions at once, in the same order as `distributionIds`. Because
+    ///         `claimMany` reverts if any entry pays nothing, callers can use this to drop those entries first.
+    function claimableMany(uint256[] calldata distributionIds, address holder)
+        external
+        view
+        returns (uint256[] memory amounts)
+    {
+        amounts = new uint256[](distributionIds.length);
+        for (uint256 i; i < distributionIds.length; ++i) {
+            amounts[i] = claimable(distributionIds[i], holder);
+        }
+    }
+
     function claim(uint256 distributionId) external {
         _claim(distributionId, msg.sender);
     }

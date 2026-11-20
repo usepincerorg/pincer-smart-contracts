@@ -47,8 +47,12 @@ contract OwnershipCeilingRule is HolderBalanceRuleBase {
         }
         delete _exempt;
         for (uint256 i; i < exempt.length; ++i) {
-            isExempt[exempt[i]] = true;
-            _exempt.push(exempt[i]);
+            address id = exempt[i];
+            if (id == address(0)) revert InvalidConfig();
+            // Repeated entries are skipped so exemptIdentities() lists each identity once.
+            if (isExempt[id]) continue;
+            isExempt[id] = true;
+            _exempt.push(id);
         }
     }
 }

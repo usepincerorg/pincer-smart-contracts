@@ -12,6 +12,8 @@ import {HolderLimitRule} from "../src/policy/rules/HolderLimitRule.sol";
 import {TradingWindowRule} from "../src/policy/rules/TradingWindowRule.sol";
 import {FirstRefusalRule} from "../src/policy/rules/FirstRefusalRule.sol";
 import {VestingScheduleRule} from "../src/policy/rules/VestingScheduleRule.sol";
+import {OwnershipCeilingRule} from "../src/policy/rules/OwnershipCeilingRule.sol";
+import {PolicyRuleBase} from "../src/policy/rules/PolicyRuleBase.sol";
 import {CheckCodes} from "../src/common/CheckCodes.sol";
 import {ClaimTopics} from "../src/common/ClaimTopics.sol";
 
@@ -169,6 +171,24 @@ contract PolicyRulesTest is TestBase {
         vm.warp(T0 + 44 days);
         assertEq(_code(token, alice, bob, 20), CheckCodes.ROFR_PENDING);
         assertEq(_code(token, alice, address(windows), 20), CheckCodes.OK);
+    }
+
+    function test_MaxOwnershipExemptList() public {
+        address[] memory exempt = new address[](3);
+        exempt[0] = alice;
+        exempt[1] = bob;
+        exempt[2] = alice;
+        PincerEquityToken token =
+            _deployClass("C", _modules1("MAX_OWNERSHIP", abi.encode(uint16(1_000), false, exempt)));
+        OwnershipCeilingRule rule = OwnershipCeilingRule(token.ruleEngine().modules()[0]);
+        address[] memory listed = rule.exemptIdentities();
+        assertEq(listed.length, 2);
+        assertEq(listed[0], alice);
+        assertEq(listed[1], bob);
+
+        exempt[2] = address(0);
+        vm.expectRevert(PolicyRuleBase.InvalidConfig.selector);
+        _deployClass("D", _modules1("MAX_OWNERSHIP", abi.encode(uint16(1_000), false, exempt)));
     }
 
     function test_MaxOwnership() public {
